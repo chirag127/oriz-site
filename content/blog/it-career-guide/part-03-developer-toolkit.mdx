@@ -1,0 +1,310 @@
+---
+title: "Part 3: The Developer Toolkit - WSL2, Terminal & Productivity"
+description: "Set up a professional-grade development environment on Windows. WSL2, Docker Desktop, VS Code configuration, terminal customization, and productivity automation."
+pubDate: "2026-05-29"
+tags: ["Developer Toolkit", "WSL2", "Docker", "VS Code", "Productivity", "Career Guide"]
+category: "Career Guide"
+author: "Chirag Singhal"
+series: "The 2026 IT Career Blueprint"
+part: 3
+draft: false
+---
+
+
+# Part 3: The Developer Toolkit - WSL2, Terminal & Productivity
+
+*[← Back to Master Index](/blog/it-career-guide)*
+
+---
+
+## 1. Why a Proper Developer Toolkit Matters
+
+In 2026, the difference between a junior and senior engineer often comes down to tooling efficiency. A well-configured development environment can save 2-3 hours per week, which compounds to months of productivity over a career. This guide will help you set up a professional-grade toolkit that scales with your skills.
+
+---
+
+## 2. WSL2 (Windows Subsystem for Linux 2)
+
+### What is WSL2?
+
+WSL2 is a virtualization platform that runs a real Linux kernel on Windows 10/11. It provides a native Linux environment without the overhead of traditional virtual machines.
+
+### Installation Steps
+
+1. **Enable WSL2 via PowerShell (Admin):**
+```powershell
+wsl --install
+wsl --set-default-version 2
+```
+
+2. **Install a Linux Distribution:**
+   - Ubuntu 22.04 LTS (Recommended for beginners)
+   - Debian (Lightweight)
+   - Kali Linux (For security work)
+
+3. **Initial Setup:**
+```bash
+# Update packages
+sudo apt update && sudo apt upgrade -y
+
+# Install essential tools
+sudo apt install curl git vim nano htop jq build-essential -y
+
+# Set up SSH keys
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+```
+
+### WSL2 Best Practices
+
+| Practice | Benefit |
+|----------|---------|
+| Use WSL2 for Linux-native tools | Docker, Redis, PostgreSQL |
+| Keep Windows for IDE/UI | VS Code, browser debugging |
+| Use `wsl --shutdown` when done | Free up memory |
+| Mount Windows drives via `/mnt/c/` | Access project files |
+
+---
+
+## 3. Terminal Customization
+
+### Windows Terminal Setup
+
+1. **Install Windows Terminal:**
+```powershell
+winget install Microsoft.WindowsTerminal
+```
+
+2. **Install Oh My Zsh (in WSL2):**
+```bash
+sudo apt install zsh -y
+sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+```
+
+3. **Essential Zsh Plugins:**
+```bash
+# Install plugins
+git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+git clone https://github.com/zsh-users/zsh-autosuggestions.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+
+# Add to ~/.zshrc
+plugins=(git zsh-syntax-highlighting zsh-autosuggestions)
+```
+
+### Essential Terminal Tools
+
+| Tool | Purpose | Install Command |
+|------|---------|-----------------|
+| **tmux** | Terminal multiplexer | `sudo apt install tmux` |
+| **htop** | Process monitor | `sudo apt install htop` |
+| **fzf** | Fuzzy finder | `sudo apt install fzf` |
+| **ripgrep** | Fast grep alternative | `sudo apt install ripgrep` |
+| **bat** | Cat with syntax highlighting | `sudo apt install bat` |
+| **exa** | Modern ls alternative | `sudo snap install exa` |
+
+### Tmux Configuration
+
+```bash
+# ~/.tmux.conf
+set -g mouse on
+set -g history-limit 10000
+bind r source-file ~/.tmux.conf \; display-message "Config reloaded"
+```
+
+---
+
+## 4. Docker Desktop Setup
+
+### Installation
+
+1. **Download Docker Desktop for Windows**
+2. **Enable WSL2 backend:**
+```powershell
+# In Docker Desktop Settings → Resources → WSL Integration
+# Enable integration with your WSL2 distro
+```
+
+### Essential Docker Commands
+
+```bash
+# Basic operations
+docker ps                    # List running containers
+docker images                # List images
+docker build -t app .        # Build from Dockerfile
+docker run -d -p 3000:3000 app  # Run with port mapping
+
+# Useful shortcuts
+docker exec -it container_name bash  # Enter running container
+docker logs container_name           # View logs
+docker-compose up -d                 # Start services
+```
+
+### Docker Best Practices
+
+| Practice | Reason |
+|----------|--------|
+| Use `.dockerignore` | Reduce image size |
+| Multi-stage builds | Smaller production images |
+| Use official base images | Security updates |
+| Tag images properly | Version control |
+
+---
+
+## 5. VS Code Configuration
+
+### Essential Extensions
+
+| Extension | Purpose |
+|-----------|---------|
+| **Python** | Python development |
+| **Pylance** | IntelliSense for Python |
+| **Bracket Pair Colorizer** | Visual bracket matching |
+| **GitLens** | Enhanced Git integration |
+| **Docker** | Docker file support |
+| **GitHub Copilot** | AI pair programming |
+| **Error Lens** | Inline error highlighting |
+| **Auto Rename Tag** | HTML/XML tag renaming |
+| **Prettier** | Code formatting |
+| **Git History** | Visual commit history |
+
+### VS Code Settings (settings.json)
+
+```json
+{
+    "python.defaultInterpreterPath": "/usr/bin/python3",
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "git.autofetch": true,
+    "git.confirmSync": false,
+    "terminal.integrated.shell.linux": "/bin/zsh",
+    "files.autoSave": "afterDelay",
+    "files.autoSaveDelay": 1000
+}
+```
+
+### Remote Development
+
+Use **Remote - WSL** extension to develop directly in WSL2 from Windows VS Code.
+
+---
+
+## 6. Development Environment Architecture
+
+### Recommended Setup for 2026
+
+```
+Windows 11 (Host OS)
+├── WSL2 Ubuntu 22.04 (Development Environment)
+│   ├── Python 3.11+
+│   ├── Node.js 20+
+│   ├── Docker Engine
+│   ├── Redis
+│   ├── PostgreSQL
+│   └── VS Code Server
+└── Windows Apps
+    ├── VS Code (UI)
+    ├── Browser (Chrome/Firefox)
+    └── Communication (Slack, Teams)
+```
+
+---
+
+## 7. Resource Directory: Developer Toolkit
+
+### Best Books
+
+| Book | Author | Price | Key Topics |
+|------|--------|-------|------------|
+| **The Linux Command Line** | William Shotts | Free | Linux fundamentals |
+| **Docker Deep Dive** | Nigel Poulton | Paid | Containerization |
+| **The Practice of Cloud Security** | Various | Paid | Cloud tooling |
+
+### Best Udemy Courses
+
+| Course | Instructor | Price (INR) | Key Topics |
+|--------|------------|-------------|------------|
+| **Linux Command Line Basics** | John Purcell | ₹399-799 | Shell, commands |
+| **Docker & Kubernetes** | Nigel Poulton | ₹1,999-2,999 | Containers, orchestration |
+| **The Complete Linux Training Course** | Lazaro Diaz | ₹999-1,499 | System admin |
+
+### Best O'Reilly Resources
+
+| Resource | Topic | Access |
+|----------|-------|--------|
+| **Learning WSL** | Microsoft Learn | Free |
+| **Docker Fundamentals** | O'Reilly | Paid |
+| **Linux Bible** | Christopher Negus | Paid |
+
+### Best LinkedIn Learning Courses
+
+| Course | Instructor | Access |
+|--------|------------|--------|
+| **Linux for Developers** | Shaun Wassell | Paid |
+| **Docker Essential Training** | Arun Gupta | Paid |
+| **Learning the Linux Terminal** | Scott Simpson | Paid |
+
+### Free Resources
+
+| Platform | Resource | Link |
+|----------|----------|------|
+| **Microsoft Learn** | WSL2 Documentation | docs.microsoft.com/wsl |
+| **Docker Docs** | Official Docker Guide | docs.docker.com |
+| **GitHub CLI** | Command line tools | cli.github.com |
+| **Awesome Shell** | Shell tools list | github.com/aleizawitz/awesome-shell |
+
+---
+
+## 8. Productivity Automation
+
+### Shell Aliases
+
+```bash
+# Add to ~/.zshrc
+alias gs='git status'
+alias ga='git add'
+alias gc='git commit'
+alias gp='git push'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ll='ls -la'
+alias python='python3'
+```
+
+### Useful Scripts
+
+```bash
+# Quick project setup
+#!/bin/bash
+# new-project.sh
+mkdir $1 && cd $1
+git init
+code .
+```
+
+### Development Workflow Automation
+
+```bash
+# Daily setup script
+#!/bin/bash
+# morning-setup.sh
+tmux new-session -d -s work
+tmux new-window -t work -n server
+tmux new-window -t work -n client
+tmux new-window -t work -n notes
+tmux attach -t work
+```
+
+---
+
+## 9. Part Navigation
+
+### Previous Parts
+[Part 2: Git & GitHub](/blog/it-career-guide/part-02-git-github)
+
+### Next Parts
+[Part 4: Python Mastery](/blog/it-career-guide/part-04-python-mastery) ·
+[Part 5: Async Python & FastAPI](/blog/it-career-guide/part-05-async-python-fastapi)
+
+---
+
+*[Proceed to Part 4: Python Mastery →](/blog/it-career-guide/part-04-python-mastery)*

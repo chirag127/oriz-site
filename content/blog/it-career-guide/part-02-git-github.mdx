@@ -1,0 +1,541 @@
+---
+title: "Part 2: Git, GitHub & Version Control Mastery"
+description: "Master Git branching strategies, PR workflows, rebasing, conflict resolution, and open-source contribution patterns. Essential for every software engineer."
+pubDate: "2026-05-29"
+tags: ["Git", "GitHub", "Version Control", "DevOps", "Career Guide"]
+category: "Career Guide"
+author: "Chirag Singhal"
+series: "The 2026 IT Career Blueprint"
+part: 2
+draft: false
+---
+
+
+# Part 2: Git, GitHub & Version Control Mastery
+
+*[← Back to Master Index](/blog/it-career-guide)*
+
+---
+
+## 1. Git Fundamentals: The Mental Model
+
+### What is Version Control?
+
+Version control systems (VCS) track changes to your codebase over time. Git is a **distributed** VCS, meaning every developer has a complete copy of the repository history locally.
+
+### Core Git Concepts
+
+```
+Working Directory → Staging Area (git add) → Local Repository (git commit) → Remote Repository (git push)
+```
+
+### Essential Git Commands
+
+| Command | Purpose |
+|---------|---------|
+| `git init` | Initialize a new repository |
+| `git clone <url>` | Clone a remote repository |
+| `git status` | Check repository state |
+| `git add <file>` | Stage changes |
+| `git commit -m "message"` | Commit staged changes |
+| `git push` | Push to remote repository |
+| `git pull` | Pull from remote repository |
+| `git log` | View commit history |
+| `git branch` | List/create branches |
+| `git checkout <branch>` | Switch branches |
+
+---
+
+## 2. Branching Strategies
+
+### Git Flow (Feature Branch Workflow)
+
+The most widely used branching strategy in professional environments:
+
+```
+main/master (production)
+    ↑
+    | (merge)
+    ↓
+develop (staging)
+    ↑
+    | (merge)
+    ↓
+feature branches (feature-x, feature-y)
+```
+
+### GitHub Flow (Simpler Alternative)
+
+Used by many modern teams:
+
+```
+main (production)
+    ↑
+    | (PR merge)
+    ↓
+feature branches → Pull Request → Review → Merge
+```
+
+### Branch Naming Conventions
+
+Use descriptive, consistent names:
+- `feature/user-authentication`
+- `fix/login-error-handling`
+- `docs/update-readme`
+- `refactor/database-connection`
+- `hotfix/critical-security-patch`
+
+---
+
+## 3. Pull Request (PR) Best Practices
+
+### PR Structure
+
+1. **Clear Title**: Concise description of changes
+2. **Detailed Description**: What, Why, How
+3. **Screenshots**: For UI changes
+4. **Test Results**: Pass/fail status
+5. **Reviewer Assignment**: Specific team members
+
+### PR Template
+
+```markdown
+## Description
+Brief description of changes
+
+## Related Issue
+Fixes #123
+
+## Type of Change
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
+- [ ] Documentation update
+
+## Checklist
+- [ ] Code reviewed
+- [ ] Tests passed
+- [ ] Documentation updated
+```
+
+### PR Review Guidelines
+
+**For Authors:**
+- Keep PRs small (&lt; 400 lines changed)
+- Write clear commit messages
+- Link related issues
+- Request specific reviewers
+
+**For Reviewers:**
+- Focus on code quality, not style
+- Ask questions instead of making demands
+- Check for security vulnerabilities
+- Verify test coverage
+
+---
+
+## 4. Advanced Git Operations
+
+### Rebasing vs Merging
+
+**Merge** creates a new commit that combines histories:
+```bash
+git merge feature-branch  # Creates merge commit
+```
+
+**Rebase** moves feature commits onto main:
+```bash
+git rebase main  # Moves feature commits on top of main
+```
+
+**When to use:**
+- **Merge**: For long-running features, public branches
+- **Rebase**: For local feature branches, cleaning history
+
+### Resolving Merge Conflicts
+
+```bash
+# When conflict occurs during merge/rebase
+git status  # Shows conflicted files
+
+# Edit conflicted files, then:
+git add <resolved-file>
+git commit  # Complete merge/rebase
+```
+
+Conflict markers:
+```
+<<<<<<< HEAD
+your changes
+=======
+incoming changes
+>>>>>>> branch-name
+```
+
+### Interactive Rebase
+
+Clean up commit history before merging:
+```bash
+git rebase -i HEAD~3  # Interactive rebase last 3 commits
+```
+
+Options:
+- `pick`: Keep commit
+- `reword`: Change commit message
+- `edit`: Modify commit
+- `squash`: Combine with previous
+- `drop`: Remove commit
+
+---
+
+## 5. GitHub Advanced Features
+
+### GitHub Actions CI/CD
+
+```yaml
+# .github/workflows/ci.yml
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+      - run: npm install
+      - run: npm test
+```
+
+### GitHub Pages Deployment
+
+For static sites:
+```yaml
+# .github/workflows/deploy.yml
+name: Deploy
+on:
+  push:
+    branches: [main]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/deploy-pages@v4
+```
+
+### GitHub Issues & Project Management
+
+**Issue Templates:**
+```markdown
+---
+name: Bug report
+about: Create a report to help us improve
+title: ''
+labels: bug
+assignees: ''
+---
+
+**Describe the bug**
+A clear and concise description of what the bug is.
+
+**To Reproduce**
+Steps to reproduce the behavior.
+
+**Expected behavior**
+What should happen.
+
+**Screenshots**
+If applicable, add screenshots.
+```
+
+---
+
+## 6. Open Source Contribution Workflow
+
+### Finding Good First Issues
+
+1. **GitHub Explore**: https://github.com/explore
+2. **Up For Grabs**: https://up-for-grabs.net/
+3. **Good First Issues**: https://goodfirstissues.com/
+4. **Your First PR**: https://yourfirstpr.github.io/
+
+### Contribution Process
+
+1. **Fork** the repository
+2. **Clone** your fork locally
+3. **Create** a feature branch
+4. **Make** changes
+5. **Commit** with clear message
+6. **Push** to your fork
+7. **Submit** Pull Request
+
+### Communication Best Practices
+
+- Be respectful and professional
+- Ask clarifying questions
+- Respond to feedback promptly
+- Thank maintainers for their time
+
+---
+
+## 7. Git Internals (Understanding the Magic)
+
+### How Git Stores Data
+
+Git uses a **content-addressable filesystem**:
+
+```
+Objects:
+- Blobs: File content
+- Trees: Directory structure
+- Commits: Snapshots with metadata
+```
+
+### Git Data Flow
+
+```
+Working Directory → Index (Staging) → .git Directory
+```
+
+### Reflog
+
+Track all changes to HEAD:
+```bash
+git reflog  # View all HEAD movements
+git reset --hard HEAD@{n}  # Reset to specific state
+```
+
+---
+
+## 8. Essential Git Configurations
+
+### Global Configuration
+
+```bash
+git config --global user.name "Your Name"
+git config --global user.email "your@email.com"
+git config --global core.editor "code --wait"
+git config --global init.defaultBranch main
+```
+
+### Useful Aliases
+
+```bash
+git config --global alias.st status
+git config --global alias.co checkout
+git config --global alias.br branch
+git config --global alias.ci commit
+git config --global alias.unstage 'reset HEAD --'
+```
+
+### SSH Keys for GitHub
+
+```bash
+ssh-keygen -t ed25519 -C "your@email.com"
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/id_ed25519
+# Copy public key to GitHub: Settings → SSH and GPG keys
+```
+
+---
+
+## 9. Git Best Practices for Career Growth
+
+### Commit Message Convention
+
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+feat: add user authentication
+fix: resolve login validation error
+docs: update API documentation
+style: format code with prettier
+refactor: simplify database queries
+test: add unit tests for auth
+chore: update dependencies
+```
+
+### Code Review Checklist
+
+Before submitting:
+- [ ] Code compiles and runs
+- [ ] Tests pass
+- [ ] No console.log statements
+- [ ] Documentation updated
+- [ ] Follows team coding standards
+
+### Repository Organization
+
+```
+project/
+├── .github/
+│   └── workflows/
+├── src/
+├── tests/
+├── docs/
+├── .gitignore
+├── README.md
+└── package.json
+```
+
+---
+
+## 10. Common Git Workflows
+
+### Feature Branch Workflow
+
+```bash
+git checkout main
+git pull
+git checkout -b feature/new-feature
+# Make changes
+git add .
+git commit -m "feat: implement new feature"
+git push origin feature/new-feature
+# Create PR on GitHub
+```
+
+### Hotfix Workflow
+
+```bash
+git checkout main
+git pull
+git checkout -b hotfix/critical-bug
+# Fix bug
+git add .
+git commit -m "fix: resolve critical bug"
+git push origin hotfix/critical-bug
+# Create PR, merge to main and develop
+```
+
+### Release Workflow
+
+```bash
+git checkout main
+git pull
+git checkout -b release/v1.0.0
+# Update version numbers
+git add .
+git commit -m "chore: release v1.0.0"
+git push origin release/v1.0.0
+# Create PR, merge to main
+git checkout main
+git merge release/v1.0.0
+git tag -a v1.0.0 -m "Release v1.0.0"
+git push origin v1.0.0
+```
+
+---
+
+## 11. Resource Directory: Git Learning
+
+### Best Books on Git
+
+| Book | Author | Price | Key Topics |
+|------|--------|-------|------------|
+| **Pro Git** | Scott Chacon & Ben Straub | Free | Complete Git guide |
+| **Git Pocket Guide** | Randall Kanna | Free | Quick reference |
+| **Version Control with Git** | O'Reilly | Paid | Professional workflows |
+
+### Best Udemy Courses
+
+| Course | Instructor | Price (INR) | Key Topics |
+|--------|------------|-------------|------------|
+| **Git Complete** | Colt Steele | ₹399-799 | Branching, merging, workflows |
+| **Git and GitHub for Beginners** | Todd McLeod | ₹399-799 | Basics to advanced |
+| **Advanced Git** | Jose Portilla | ₹399-799 | Rebase, cherry-pick, bisect |
+
+### Best O'Reilly Resources
+
+| Resource | Topic | Access |
+|----------|-------|--------|
+| **Git LiveLessons** | Video training | Paid |
+| **Version Control by Example** | Book | Paid |
+| **Git Workbook** | Hands-on exercises | Paid |
+
+### Best LinkedIn Learning Courses
+
+| Course | Instructor | Access |
+|--------|------------|--------|
+| **Git Essential Training** | Kevin Skoglund | Paid |
+| **GitHub Essential Training** | Kevin Skoglund | Paid |
+| **Learning Git** | Erin Allard | Paid |
+
+### Free Resources
+
+| Platform | Resource | Link |
+|----------|----------|------|
+| **GitHub Docs** | Official documentation | docs.github.com |
+| **Learn Git Branching** | Interactive tutorial | learngitbranching.js.org |
+| **Git Immersion** | Guided tour | gitimmersion.com |
+| **Oh Shit Git!** | Common errors | ohshitgit.com |
+
+---
+
+## 12. Hands-On Exercises
+
+### Exercise 1: Git Workflow Practice
+
+1. Create a new GitHub repository
+2. Clone it locally
+3. Create a feature branch
+4. Make 3 commits with different changes
+5. Rebase interactively to clean up history
+6. Merge via PR
+
+### Exercise 2: Open Source Contribution
+
+1. Find a repository with "good first issue"
+2. Fork and clone the repository
+3. Make changes following their guidelines
+4. Submit a PR
+5. Address feedback from maintainers
+
+---
+
+## 13. Common Git Interview Questions
+
+| Question | Answer |
+|----------|--------|
+| **What is the difference between git merge and git rebase?** | Merge combines histories with a new commit. Rebase moves commits on top of another branch. Use merge for public branches, rebase for local cleanup. |
+| **How do you resolve merge conflicts?** | Edit conflicted files, remove conflict markers, use `git add` to stage, then `git commit` to complete. |
+| **What is the purpose of .gitignore?** | Tells Git which files/folders to skip when committing. Useful for node_modules, .env files, build artifacts. |
+| **What is a "detached HEAD" state?** | When you checkout a specific commit instead of a branch. Useful for inspecting old code but not for development. |
+| **How do you undo the last commit?** | `git reset --soft HEAD~1` (keeps changes) or `git reset --hard HEAD~1` (removes changes). |
+
+---
+
+## 14. Career Impact of Git Mastery
+
+### On Your Resume
+```markdown
+- Contributed to open-source projects via GitHub (15+ PRs merged)
+- Led Git workflow design for team of 5 developers
+- Implemented CI/CD pipelines using GitHub Actions
+```
+
+### On Your LinkedIn
+- Pin repositories with clean commit history
+- Showcase branching strategies used
+- Highlight PR reviews and code collaborations
+
+### For Interviews
+- Explain your branching strategy choice
+- Discuss merge conflict resolution process
+- Demonstrate knowledge of Git internals
+
+---
+
+## 15. Part Navigation
+
+### Previous Parts
+[Part 1: The Blueprint](/blog/it-career-guide/part-01-the-blueprint)
+
+### Next Parts
+[Part 3: Developer Toolkit](/blog/it-career-guide/part-03-developer-toolkit) ·
+[Part 4: Python Mastery](/blog/it-career-guide/part-04-python-mastery) ·
+[Part 5: Async Python & FastAPI](/blog/it-career-guide/part-05-async-python-fastapi)
+
+---
+
+*[Proceed to Part 3: The Developer Toolkit →](/blog/it-career-guide/part-03-developer-toolkit)*

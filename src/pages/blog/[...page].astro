@@ -1,0 +1,95 @@
+---
+/**
+ * /blog — the archive moved off blog.oriz.in. Content is vendored under
+ * content/blog (see scripts/sync-blog.mjs), so this route builds with oriz.in
+ * and needs no second deployment.
+ */
+import type { Page } from 'astro'
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import { getCollection } from 'astro:content'
+
+export async function getStaticPaths({ paginate }: { paginate: Function }) {
+  const posts = (await getCollection('blog'))
+    .filter((p) => !p.data.draft)
+    .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  return paginate(posts, { pageSize: 30 })
+}
+
+interface Props {
+  page: Page<(Awaited<ReturnType<typeof getCollection<'blog'>>>)[number]>
+}
+
+const { page } = Astro.props
+const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+const href = (id: string) => `/blog/${id}/`
+
+const breadcrumbs = [{ label: 'Home', href: '/' }, { label: 'Blog' }]
+---
+
+<BaseLayout
+  title={page.currentPage === 1 ? 'Blog — oriz' : `Blog — page ${page.currentPage}`}
+  description="Long-form writing on engineering, finance, and books — the full archive, now served from oriz.in."
+  breadcrumbs={breadcrumbs}
+  keywords={['blog', 'writing', 'engineering', 'finance']}
+>
+  <div class="container blog">
+    <header class="head">
+      <p class="eyebrow">Blog</p>
+      <h1>Writing that outlived the feed</h1>
+      <p class="lede">
+        {page.total} posts, moved here from blog.oriz.in so the site and the writing live in one place.
+        Old links keep working: every post keeps its slug.
+      </p>
+    </header>
+
+    <ol class="posts">
+      {page.data.map((post) => (
+        <li>
+          <a href={href(post.id)}>
+            <span class="date">{fmt(post.data.pubDate)}</span>
+            <span class="body">
+              <span class="title">{post.data.title}</span>
+              {post.data.description && <span class="desc">{post.data.description}</span>}
+            </span>
+            <span class="meta">
+              {post.data.category && <span class="cat">{post.data.category}</span>}
+              {post.data.series && <span class="series">series</span>}
+            </span>
+          </a>
+        </li>
+      ))}
+    </ol>
+
+    <nav class="pager" aria-label="Blog pages">
+      {page.url.prev && <a href={page.url.prev}>← Newer</a>}
+      <span>Page {page.currentPage} of {page.lastPage}</span>
+      {page.url.next && <a href={page.url.next}>Older →</a>}
+    </nav>
+  </div>
+</BaseLayout>
+
+<style>
+  .blog { max-width: 60rem; }
+  .head { margin: 2rem 0 2.5rem; }
+  .eyebrow { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-text-muted, #8b9aa6); margin: 0 0 0.5rem; }
+  .head h1 { font-size: clamp(1.7rem, 4vw, 2.5rem); line-height: 1.15; margin: 0 0 0.7rem; }
+  .lede { max-width: 46rem; margin: 0; color: var(--color-text-muted, #8b9aa6); line-height: 1.6; }
+
+  .posts { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--color-border, rgba(255,255,255,0.1)); }
+  .posts li { border-bottom: 1px solid var(--color-border, rgba(255,255,255,0.1)); }
+  .posts a { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr) auto; gap: 1rem; padding: 0.85rem 0.25rem; align-items: baseline; text-decoration: none; }
+  .date { font-variant-numeric: tabular-nums; font-size: 0.78rem; color: var(--color-text-muted, #8b9aa6); }
+  .body { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+  .title { font-weight: 600; color: var(--color-text, #e9eef2); }
+  .desc { font-size: 0.84rem; color: var(--color-text-muted, #8b9aa6); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; }
+  .meta { display: flex; gap: 0.5rem; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-muted, #8b9aa6); }
+  .posts a:hover .title { text-decoration: underline; text-underline-offset: 3px; }
+
+  .pager { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: 2rem 0 3rem; font-size: 0.85rem; color: var(--color-text-muted, #8b9aa6); }
+
+  @media (max-width: 720px) {
+    .posts a { grid-template-columns: minmax(0, 1fr); gap: 0.25rem; }
+    .date { order: 2; }
+    .meta { order: 3; }
+  }
+</style>

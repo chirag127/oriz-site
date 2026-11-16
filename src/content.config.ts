@@ -101,4 +101,47 @@ const guides = defineCollection({
   schema: guideSchema,
 });
 
-export const collections = { articles, guides };
+
+// Blog posts migrated from chirag127/oriz-blog (blog.oriz.in). Content is vendored
+// under content/blog by scripts/sync-blog.mjs so a build needs no network.
+//
+// The schema is deliberately forgiving. 475 posts written over a year carry
+// inconsistent frontmatter — an empty `tags:` key parses as null, some use a
+// string where others use an array, a few omit the date — and a strict schema
+// would reject the archive instead of migrating it. Values are normalised, not
+// trusted.
+const asTags = z
+  .union([z.array(z.string()), z.string(), z.null()])
+  .optional()
+  .transform((v) => (Array.isArray(v) ? v : v ? v.split(',').map((t) => t.trim()).filter(Boolean) : []));
+
+const asText = z
+  .union([z.string(), z.null()])
+  .optional()
+  .transform((v) => (v && v.trim() ? v.trim() : undefined));
+
+const blogSchema = z.object({
+  title: z.string().min(1),
+  description: asText,
+  pubDate: z.coerce.date().catch(new Date('2026-01-01')),
+  updatedDate: z.coerce.date().optional().nullable().catch(undefined),
+  author: z.string().default('Chirag Singhal'),
+  tags: asTags,
+  category: asText,
+  series: asText,
+  draft: z.union([z.boolean(), z.string(), z.null()]).optional().transform((v) => v === true || v === 'true'),
+}).loose();
+
+const blog = defineCollection({
+  loader: glob({
+    base: './content/blog',
+    pattern: '**/*.{md,mdx}',
+    // Nested paths are kept, not flattened, so every blog.oriz.in URL maps to
+    // the same path here: 100-best-teen-dramas/index.mdx -> 100-best-teen-dramas
+    // and it-career-guide/part-04-x.mdx -> it-career-guide/part-04-x
+    generateId: ({ entry }) => entry.replace(/\.(md|mdx)$/u, '').replace(/\/index$/u, ''),
+  }),
+  schema: blogSchema,
+});
+
+export const collections = { articles, guides, blog };

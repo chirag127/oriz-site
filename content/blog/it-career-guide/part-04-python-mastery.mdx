@@ -1,0 +1,433 @@
+---
+title: "Part 4: Python Mastery - From Scripting to Production-Grade Code"
+description: "Transform from 'basic Python' to production-grade Python. Advanced OOP, decorators, generators, context managers, type hints, metaclasses, packaging, and virtual environments."
+pubDate: "2026-05-29"
+tags: ["Python", "Backend", "Programming", "Career Guide"]
+category: "Career Guide"
+author: "Chirag Singhal"
+series: "The 2026 IT Career Blueprint"
+part: 4
+draft: false
+---
+
+
+# Part 4: Python Mastery - From Scripting to Production-Grade Code
+
+*[← Back to Master Index](/blog/it-career-guide)*
+
+---
+
+## 1. Why Python for 2026?
+
+Python remains the dominant language for backend engineering, AI/ML, data engineering, and automation in 2026. Its simplicity allows rapid prototyping while its ecosystem supports production-scale applications.
+
+### Python's Role in High-Paying Jobs
+
+| Role | Python Usage | Salary Premium |
+|------|--------------|----------------|
+| Backend Engineer | FastAPI, Django, Flask | 10-20% |
+| AI/ML Engineer | PyTorch, TensorFlow, Scikit-learn | 30-50% |
+| Data Engineer | Pandas, Airflow, Spark | 20-35% |
+| DevOps Engineer | Ansible, Scripting | 15-25% |
+
+---
+
+## 2. Advanced Python Concepts
+
+### Object-Oriented Programming (OOP) Deep Dive
+
+#### Classes and Objects
+
+```python
+class DatabaseConnection:
+    def __init__(self, host: str, port: int):
+        self.host = host
+        self.port = port
+        self._connection = None
+    
+    def connect(self):
+        # Connection logic
+        self._connection = f"Connected to {self.host}:{self.port}"
+        return self._connection
+    
+    def __str__(self):
+        return f"DB Connection to {self.host}"
+
+# Usage
+db = DatabaseConnection("localhost", 5432)
+print(db)  # DB Connection to localhost
+```
+
+#### Inheritance and Polymorphism
+
+```python
+class BaseRepository:
+    def __init__(self, model):
+        self.model = model
+    
+    def save(self, data):
+        raise NotImplementedError
+
+class UserRepository(BaseRepository):
+    def save(self, data):
+        # User-specific save logic
+        return {"id": 1, **data}
+
+class ProductRepository(BaseRepository):
+    def save(self, data):
+        # Product-specific save logic
+        return {"product_id": "p1", **data}
+```
+
+#### Encapsulation and Properties
+
+```python
+class APIClient:
+    def __init__(self, api_key: str):
+        self._api_key = api_key
+        self._base_url = "https://api.example.com"
+    
+    @property
+    def api_key(self):
+        return "***HIDDEN***"
+    
+    @api_key.setter
+    def api_key(self, value):
+        if not value:
+            raise ValueError("API key required")
+        self._api_key = value
+```
+
+---
+
+## 3. Decorators and Higher-Order Functions
+
+### Function Decorators
+
+```python
+import functools
+import time
+
+def timing_decorator(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.perf_counter()
+        result = func(*args, **kwargs)
+        end = time.perf_counter()
+        print(f"{func.__name__} took {end - start:.4f} seconds")
+        return result
+    return wrapper
+
+@timing_decorator
+def fetch_data(url: str) -> dict:
+    time.sleep(1)
+    return {"data": "fetched"}
+
+# Usage
+fetch_data("https://api.example.com")
+```
+
+### Class Decorators
+
+```python
+def singleton(cls):
+    instances = {}
+    def get_instance(*args, **kwargs):
+        if cls not in instances:
+            instances[cls] = cls(*args, **kwargs)
+        return instances[cls]
+    return get_instance
+
+@singleton
+class DatabasePool:
+    def __init__(self):
+        self.pool = []
+```
+
+### Property Decorators
+
+```python
+class Temperature:
+    def __init__(self, celsius: float = 0):
+        self._celsius = celsius
+    
+    @property
+    def celsius(self):
+        return self._celsius
+    
+    @property
+    def fahrenheit(self):
+        return self._celsius * 9/5 + 32
+    
+    @fahrenheit.setter
+    def fahrenheit(self, value):
+        self._celsius = (value - 32) * 5/9
+```
+
+---
+
+## 4. Generators and Iterators
+
+### Generator Functions
+
+```python
+def fibonacci_generator(limit: int):
+    a, b = 0, 1
+    while a < limit:
+        yield a
+        a, b = b, a + b
+
+# Usage
+for num in fibonacci_generator(100):
+    print(num)
+```
+
+### Generator Expressions
+
+```python
+# Memory-efficient processing
+squares = (x**2 for x in range(1000000))
+print(sum(squares))  # Process without storing all values
+```
+
+### Custom Iterators
+
+```python
+class CountDown:
+    def __init__(self, start: int):
+        self.current = start
+    
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
+        if self.current <= 0:
+            raise StopIteration
+        self.current -= 1
+        return self.current + 1
+```
+
+---
+
+## 5. Context Managers
+
+### Using `with` Statement
+
+```python
+# File handling
+with open('data.txt', 'r') as f:
+    content = f.read()
+
+# Database connection
+with database.connection() as conn:
+    result = conn.execute("SELECT * FROM users")
+```
+
+### Custom Context Managers
+
+```python
+from contextlib import contextmanager
+
+@contextmanager
+def timer(name: str):
+    start = time.perf_counter()
+    yield
+    end = time.perf_counter()
+    print(f"{name} took {end - start:.4f} seconds")
+
+# Usage
+with timer("database query"):
+    # Database operations
+    pass
+```
+
+### Class-Based Context Managers
+
+```python
+class DatabaseTransaction:
+    def __init__(self, db):
+        self.db = db
+    
+    def __enter__(self):
+        self.db.begin_transaction()
+        return self.db
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type:
+            self.db.rollback()
+        else:
+            self.db.commit()
+```
+
+---
+
+## 6. Type Hints and Static Analysis
+
+### Basic Type Hints
+
+```python
+from typing import List, Dict, Optional, Union
+
+def process_users(users: List[Dict[str, str]]) -> Optional[Dict[str, int]]:
+    if not users:
+        return None
+    return {"count": len(users)}
+
+# Union types
+def parse_id(id_value: Union[str, int]) -> str:
+    return str(id_value)
+```
+
+### Protocol and Structural Subtyping
+
+```python
+from typing import Protocol
+
+class SupportsClose(Protocol):
+    def close(self) -> None: ...
+
+def cleanup(resource: SupportsClose) -> None:
+    resource.close()
+```
+
+### Generic Types
+
+```python
+from typing import TypeVar, Generic
+
+T = TypeVar('T')
+
+class Cache(Generic[T]):
+    def __init__(self):
+        self._data: Dict[str, T] = {}
+    
+    def set(self, key: str, value: T) -> None:
+        self._data[key] = value
+    
+    def get(self, key: str) -> Optional[T]:
+        return self._data.get(key)
+```
+
+---
+
+## 7. Virtual Environments and Packaging
+
+### venv vs. conda
+
+```bash
+# venv (built-in, lightweight)
+python -m venv myproject
+source myproject/bin/activate  # Linux/Mac
+myproject\Scripts\activate     # Windows
+
+# conda (package management + environments)
+conda create -n myproject python=3.11
+conda activate myproject
+```
+
+### pyproject.toml (Modern Packaging)
+
+```toml
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "myproject"
+version = "0.1.0"
+dependencies = [
+    "fastapi>=0.68.0",
+    "pydantic>=1.8.0",
+    "sqlalchemy>=1.4.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+```
+
+### Poetry (Alternative to pip)
+
+```bash
+# Install Poetry
+curl -sSL https://install.python-poetry.org | python3 -
+
+# Initialize
+poetry init
+poetry add fastapi uvicorn
+poetry add pytest --group dev
+```
+
+---
+
+## 8. Resource Directory: Python Learning
+
+### Best Books
+
+| Book | Author | Price | Key Topics |
+|------|--------|-------|------------|
+| **Effective Python** | Brett Slatkin | Paid | 90 specific ways to write better Python |
+| **Fluent Python** | Luciano Ramalho | Paid | Deep dive into Python internals |
+| **Python Tricks** | Dan Bader | Paid | Practical tips and best practices |
+| **Architecture Patterns with Python** | Harry Percival | Paid | Domain-driven design, CQRS |
+
+### Best Udemy Courses
+
+| Course | Instructor | Price (INR) | Key Topics |
+|--------|------------|-------------|------------|
+| **100 Days of Code** | Dr. Angela Yu | ₹399-799 | Complete Python from zero |
+| **Python for Everybody** | Dr. Charles Severance | ₹399-799 | University-level Python |
+| **Python and Django** | Jose Portilla | ₹399-799 | Web development with Django |
+| **Python for Data Science** | Jose Portilla | ₹399-799 | Pandas, NumPy, visualization |
+
+### Best O'Reilly Resources
+
+| Resource | Topic | Access |
+|----------|-------|--------|
+| **Python Cookbook** | David Beazley | Paid |
+| **Mastering Python** | Sam Sexton | Paid |
+| **Python Fundamentals** | Barron Stone | Paid |
+
+### Best LinkedIn Learning Courses
+
+| Course | Instructor | Access |
+|--------|------------|--------|
+| **Python Essential Training** | Joe Marini | Paid |
+| **Python for Data Science** | Michael Lester | Paid |
+| **Learning Python** | Erin Allard | Paid |
+| **Python Security** | Emmanuel Tsukerman | Paid |
+
+### Free Resources
+
+| Platform | Resource | Link |
+|----------|----------|------|
+| **Python.org** | Official documentation | docs.python.org |
+| **Real Python** | Tutorials and articles | realpython.com |
+| **Automate the Boring Stuff** | Free online book | automatetheboringstuff.com |
+| **Python Design Patterns** | GitHub repo | github.com/justin-chang/python-design-patterns |
+
+---
+
+## 9. Common Python Interview Questions
+
+| Question | Answer |
+|----------|--------|
+| **Difference between list and tuple?** | Lists are mutable, tuples are immutable. Use tuples for constants. |
+| **What is the GIL?** | Global Interpreter Lock prevents multi-threading in CPU-bound tasks. Use multiprocessing instead. |
+| **How does *args and **kwargs work?** | *args unpacks positional arguments, **kwargs unpacks keyword arguments. |
+| **What is a closure?** | Inner function that remembers outer function's variables. |
+| **Difference between __str__ and __repr__?** | __str__ is for readable output, __repr__ is for debugging/unambiguous representation. |
+
+---
+
+## 10. Part Navigation
+
+### Previous Parts
+[Part 3: Developer Toolkit](/blog/it-career-guide/part-03-developer-toolkit)
+
+### Next Parts
+[Part 5: Async Python & FastAPI](/blog/it-career-guide/part-05-async-python-fastapi) ·
+[Part 6: TypeScript & Node.js](/blog/it-career-guide/part-06-typescript-nodejs)
+
+---
+
+*[Proceed to Part 5: Async Python & FastAPI →](/blog/it-career-guide/part-05-async-python-fastapi)*

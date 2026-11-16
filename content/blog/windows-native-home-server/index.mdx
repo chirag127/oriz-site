@@ -1,0 +1,143 @@
+---
+title: "WSL-Free Windows Home Server: Master Index"
+description: "A comprehensive 25-part engineering series on transforming an old Windows laptop into a full-featured bare-metal home server without installing WSL, Linux, or virtual machines—hosting Caddy, Cloudflare Tunnels, OwnCloud OCIS, Jellyfin, Ollama, n8n, and more."
+pubDate: "2026-06-06"
+tags:
+category: "Engineering"
+author: "Chirag Singhal"
+series: "WSL-Free Windows Home Server"
+part: 0
+draft: false
+---
+
+
+# WSL-Free Windows Home Server: Master Index
+
+## The Power of Bare-Metal Windows Self-Hosting
+
+Most home server guides assume you want to wipe your machine and install Linux, or at least run a heavy virtualization layer like Proxmox, Hyper-V, or Docker Desktop with WSL2 (Windows Subsystem for Linux). 
+
+While virtualization is powerful, it adds massive complexity. Running WSL2 means running a complete Linux kernel alongside Windows. This introduces:
+- **High Idle Memory Consumption**: The WSL2 virtual machine (`vmmem`) grabs 2GB to 4GB of RAM just sitting idle. On an older laptop with 16GB of RAM, this leaves little room for applications and the host OS.
+- **Port Forwarding Overhead**: WSL2 uses a dynamic virtual switch, changing its IP address on every boot. Keeping local services exposed to your network requires complex port-forwarding scripts.
+- **Filesystem Latency**: Accessing files across the Windows-Linux boundary (the `9P` server translation protocol) degrades read/write speeds by up to 90%.
+- **GPU Transcoding Barriers**: Getting native Intel QuickSync or NVIDIA NVDEC hardware acceleration working inside a virtualized Linux kernel under Windows is a driver configuration nightmare.
+
+**What if you could run a production-grade home server natively on Windows, with zero virtualization?**
+
+This series walks through every step of configuring an old laptop (modeled on the HP 15s-du2077TU with an i5-1035G1 and 16GB of RAM) as a native Windows home server. We run everything—web servers, databases, media streams, automation workflows, and local AI—as bare-metal Windows binaries, native Windows Services, and standard Node.js/Python runtimes.
+
+---
+
+## Hardware Specification Profile
+
+Our build target is a typical mid-range laptop, showing what you can achieve with retired consumer hardware.
+
+| Component       | Specification                                          |
+| :-------------- | :----------------------------------------------------- |
+| **CPU**         | Intel Core i5-1035G1 (4C/8T, 1.0–3.6 GHz, 15W TDP)     |
+| **RAM**         | 16 GB DDR4-2666 Dual-Channel (Crucial Upgrade)         |
+| **SSD**         | 256 GB PCIe NVMe M.2 (OS, Active databases, metadata)  |
+| **HDD**         | 1 TB SATA 5400 RPM (Bulk media, backups, archival)     |
+| **GPU**         | Intel UHD Graphics G1 (Integrated, QuickSync QSV support)|
+| **OS**          | Windows 10 / 11 Home or Pro (Kept bare-metal)          |
+
+---
+
+## Architectural Comparison: WSL2 vs. Native Windows
+
+Before we write a single line of config, let's understand exactly what we gain and lose by bypassing the Linux virtualization layer:
+
+| Dimension | WSL2 / Docker Desktop | Native Windows (Bare-Metal) |
+| :--- | :--- | :--- |
+| **Idle RAM Usage** | 2.5 GB – 4.5 GB (Windows + Linux Kernel) | **500 MB – 1.2 GB** (Host OS + lightweight services) |
+| **I/O Performance** | Fast inside VM; extremely slow on `/mnt/c` | **Maximum NVMe SSD / SATA HDD bare-metal throughput** |
+| **Networking** | Virtual NAT switch (dynamic IP, requires scripts) | **Native localhost (fixed IP on host LAN)** |
+| **GPU Access** | Virtualized pass-through (high latency) | **Direct driver access (Intel QuickSync, CUDA)** |
+| **Service Control** | WSL systemd management | **Native Windows Services (`services.msc`)** |
+| **Setup Complexity**| High (hypervisors, virtual networks, Linux bash) | **Low** (single executables, standard PowerShell) |
+
+---
+
+## The 25-Part Series Layout
+
+### [Part 1: Wiping WSL, OS Hardening, and Windows Power Tuning](/blog/windows-native-home-server/part-1-uninstall-wsl-os-tuning)
+Learn how to completely uninstall WSL/Ubuntu to reclaim disk space, optimize Windows power profiles (lid close actions, Modern Standby disabling), configure Windows Updates to block forced restarts, and use **NSSM (Non-Sucking Service Manager)** to wrap command-line programs into native Windows Services.
+
+### [Part 2: Native Caddy Server and Bare-Metal Cloudflare Tunnels](/blog/windows-native-home-server/part-2-caddy-cloudflare-tunnels)
+Configure local routing and secure WAN exposure. Install the native Windows port of **Caddy Server** as a service, write a lightweight `Caddyfile` for automated HTTPS, and deploy a native Windows **Cloudflare Tunnel (`cloudflared.exe`)** to bypass ISP CGNAT without opening router ports.
+
+### [Part 3: The WSL-Free Storage & Database Stack](/blog/windows-native-home-server/part-3-storage-database-stack)
+Establish data synchronization and lightweight backends. Install and configure **OwnCloud Infinite Scale (OCIS)**—a modern, single-binary Go-based Nextcloud alternative—alongside **FileBrowser** and **PocketBase** running natively on Windows.
+
+### [Part 4: Automation and Monitoring (n8n & Uptime Kuma Natively)](/blog/windows-native-home-server/part-4-automation-monitoring-apps)
+Deploy essential management tools natively via Node.js. Setup **Uptime Kuma** and **n8n** directly on Windows Node.js runtimes, run them as background services, and configure process management with **PM2 for Windows**.
+
+### [Part 5: Bare-Metal Media Server (Jellyfin with Intel QuickSync Acceleration)](/blog/windows-native-home-server/part-5-media-transcoding-jellyfin)
+Turn your server into an entertainment hub. Set up a native Windows installation of **Jellyfin**, leverage the integrated Intel UHD Graphics G1 GPU for hardware-accelerated transcoding (QuickSync QSV), and secure your streams.
+
+### [Part 6: Native Local AI and PowerShell Maintenance Automation](/blog/windows-native-home-server/part-6-local-ai-maintenance)
+Unlock offline AI capabilities and set up long-term automation. Install **Ollama for Windows** with direct GPU integration, run **Open WebUI** natively via Python/pip, and write PowerShell automation for disk cleaning, service monitoring, and Telegram health notifications.
+
+### [Part 7: Multi-Subdomain Ingress & Dynamic Web App Hosting](/blog/windows-native-home-server/part-7-multi-subdomain-paas-routing)
+Host multiple dynamic subdomains (`api.yourdomain.com`, `dashboard.yourdomain.com`) on different local ports using a single Caddy reverse-proxy instance, while keeping the corporate website on Cloudflare Pages for free.
+
+### [Part 8: Self-Hosting Telegram Bots, Webhooks, and Event-Driven Services](/blog/windows-native-home-server/part-8-telegram-bots-webhooks)
+Run native Telegram bots on Windows, routing webhooks through Caddy with automated HTTPS certificates to enable zero-latency, polling-free bot performance.
+
+### [Part 9: PaaS Replacements & GitOps (Heroku/Railway Alternatives)](/blog/windows-native-home-server/part-9-gitops-free-tier-integration)
+Build a 100% free auto-deployment pipeline. Configure GitHub Webhooks to notify a lightweight native endpoint on your server, pulling code, updating packages, and auto-restarting background processes.
+
+### [Part 10: Replacing AWS S3 and RDS (Native Databases & Cloudflare R2)](/blog/windows-native-home-server/part-10-database-object-storage)
+Set up high-performance native PostgreSQL and MariaDB databases. Integrate backups with MinIO or **Cloudflare R2** (10GB/month free tier) to replace paid RDS and S3 options.
+
+### [Part 11: Replacing Auth0 and Google Analytics (Identity Management & Privacy Analytics)](/blog/windows-native-home-server/part-11-sso-analytics)
+Eliminate SaaS subscription limits. Deploy **Authelia** for single sign-on (SSO) and **Umami** (on SQLite) for web traffic analytics.
+
+### [Part 12: Replacing Datadog & CloudWatch (Bare-Metal Observability)](/blog/windows-native-home-server/part-12-observability-logs)
+Gather system and container performance metrics using Prometheus, Windows Exporter, Loki, and Grafana for real-time visualization and alerting.
+
+### [Part 13: Replacing Paid VPNs & Team Access (Private WireGuard & Tailscale)](/blog/windows-native-home-server/part-13-vpn-remote-access)
+Enable remote server access and create a private overlay mesh network for all user devices at zero cost using Tailscale's free tier.
+
+### [Part 14: Replacing Google Photos & iCloud (Self-Hosted Photo Storage)](/blog/windows-native-home-server/part-14-photo-storage)
+Configure a photo library sync (Lychee or OCIS Photos) to backup mobile media directly to the server's 1TB HDD, bypassing monthly cloud storage fees.
+
+### [Part 15: Replacing Paid Password Managers (1Password, Bitwarden Premium)](/blog/windows-native-home-server/part-15-password-manager)
+Build a cross-platform password sync system using KeePassXC and WebDAV (via OwnCloud OCIS) for maximum security and zero ongoing costs.
+
+### [Part 16: Replacing Paid Cron & Event Schedulers (Cronitor, AWS EventBridge)](/blog/windows-native-home-server/part-16-cron-schedulers)
+Schedule background scripts natively using Windows Task Scheduler, with execution logs, log rotation, and instant failure alerts pushed to Telegram.
+
+### [Part 17: Replacing Paid Link Shorteners & Bio-Links (Linktree, Bitly)](/blog/windows-native-home-server/part-17-link-shorteners)
+Deploy a native instance of LinkStack or a lightweight URL shortener behind Caddy to manage link redirection under a custom subdomain.
+
+### [Part 18: Replacing Paid Email Forwarding & SMTP (SendGrid, Mailgun)](/blog/windows-native-home-server/part-18-email-forwarding-smtp)
+Utilize Cloudflare Email Routing for free inbound forwarding and set up Mailrise as an SMTP-to-app gateway to forward alerts as push notifications.
+
+### [Part 19: Replacing Paid Read-it-Later & RSS Services (Pocket, Feedly Premium)](/blog/windows-native-home-server/part-19-rss-reader)
+Install Miniflux or Wallabag natively on Windows to manage your RSS feeds and save articles for offline reading.
+
+### [Part 20: TCO Financial Audit, Performance Audit, and Hybrid Architecture](/blog/windows-native-home-server/part-20-tco-audit-conclusion)
+A complete cost audit measuring the power draw of the laptop, comparing it against VPS providers, and reviewing the hybrid checklist.
+
+### [Part 21: Replacing Sentry & Error Tracking (Self-Hosted Logging)](/blog/windows-native-home-server/part-21-error-tracking)
+Bypass Sentry's paid tier limits. Set up native file logging, console redirection, and custom PowerShell scripts to catch runtime exceptions.
+
+### [Part 22: Replacing Statuspage.io & Status Pages (Uptime Kuma Status)](/blog/windows-native-home-server/part-22-status-pages)
+Create public, white-labeled status pages for your services natively using Uptime Kuma, without paying for third-party hosting.
+
+### [Part 23: Replacing Intercom & Live Chat (Self-Hosted Support Chat)](/blog/windows-native-home-server/part-23-live-chat)
+Self-host Chatwoot or a lightweight Go chat widget behind Caddy to chat with your website visitors without Intercom subscriptions.
+
+### [Part 24: Replacing Typeform & Jotform (Self-Hosted Form Endpoints)](/blog/windows-native-home-server/part-24-form-builders)
+Build a custom Node/Python form handler that registers submissions in a local SQLite database and forwards entries directly to Telegram.
+
+### [Part 25: The Ultimate Home Server Migration Checklist](/blog/windows-native-home-server/part-25-migration-checklist)
+A step-by-step migration playbook to transition database schemas, API routes, and schedules from cloud VPS platforms to your Windows server.
+
+---
+
+*Ready to reclaim your hardware and build a zero-overhead home server?*
+
+**[Proceed to Part 1: Wiping WSL, OS Hardening, and Windows Power Tuning →](/blog/windows-native-home-server/part-1-uninstall-wsl-os-tuning)**

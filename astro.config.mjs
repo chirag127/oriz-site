@@ -1,5 +1,6 @@
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
+import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 import { unified } from '@astrojs/markdown-remark';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
@@ -21,6 +22,7 @@ export default defineConfig({
   compressHTML: true,
   integrations: [
     react(),
+    mdx(),
     sitemap({
       filter: (page) => {
         const pathname = new URL(page).pathname;
@@ -59,6 +61,11 @@ export default defineConfig({
   vite: {
     build: {
       assetsInlineLimit: 2048,
+    },
+    resolve: {
+      // Migrated blog posts import components as `~/components/...`, the alias the
+      // original repo used. Keeping it means the post sources stay unedited.
+      alias: { '~': new URL('./src', import.meta.url).pathname },
     },
   },
 });

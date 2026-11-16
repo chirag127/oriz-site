@@ -1,0 +1,454 @@
+---
+title: "Part 6: TypeScript & Node.js - Event Loops and Server-Side Mastery"
+description: "Master TypeScript type system, Express/Fastify, streams, EventEmitter, worker threads, and NestJS fundamentals for modern server-side development."
+pubDate: "2026-05-29"
+tags: ["TypeScript", "Node.js", "Backend", "JavaScript", "Career Guide"]
+category: "Career Guide"
+author: "Chirag Singhal"
+series: "The 2026 IT Career Blueprint"
+part: 6
+draft: false
+---
+
+
+# Part 6: TypeScript & Node.js - Event Loops and Server-Side Mastery
+
+*[← Back to Master Index](/blog/it-career-guide)*
+
+---
+
+## 1. Why TypeScript for Backend in 2026?
+
+TypeScript has become the de facto standard for backend development. It provides:
+- **Type safety** - Catch bugs at compile time
+- **Better IDE support** - Autocompletion and refactoring
+- **Team collaboration** - Clear contracts between services
+- **Maintainability** - Easier to understand and modify code
+
+### Salary Impact
+Backend engineers with TypeScript expertise command **10-20% higher salaries** than JavaScript-only developers.
+
+---
+
+## 2. TypeScript Fundamentals
+
+### Basic Types
+
+```typescript
+// Primitive types
+let name: string = "John";
+let age: number = 30;
+let isActive: boolean = true;
+
+// Arrays
+let numbers: number[] = [1, 2, 3];
+let names: Array<string> = ["Alice", "Bob"];
+
+// Tuples
+let tuple: [string, number] = ["age", 30];
+
+// Enums
+enum Direction {
+    Up = "UP",
+    Down = "DOWN",
+    Left = "LEFT",
+    Right = "RIGHT"
+}
+
+// Any and Unknown
+let anything: any = "hello";
+let unknownType: unknown = "hello";
+if (typeof unknownType === "string") {
+    let str: string = unknownType;
+}
+```
+
+### Interfaces and Types
+
+```typescript
+interface User {
+    id: number;
+    name: string;
+    email?: string;  // Optional
+    createdAt: Date;
+}
+
+type UserResponse = {
+    user: User;
+    token: string;
+};
+
+// Intersection types
+type AdminUser = User & { role: "admin" };
+
+// Union types
+type Status = "active" | "inactive" | "pending";
+```
+
+### Functions
+
+```typescript
+// Function types
+function greet(name: string): string {
+    return `Hello, ${name}`;
+}
+
+// Arrow functions with types
+const add = (a: number, b: number): number => a + b;
+
+// Optional and rest parameters
+function log(message: string, ...args: unknown[]): void {
+    console.log(message, ...args);
+}
+```
+
+---
+
+## 3. Advanced TypeScript Features
+
+### Generics
+
+```typescript
+function identity<T>(arg: T): T {
+    return arg;
+}
+
+interface Repository<T> {
+    findAll(): Promise<T[]>;
+    findById(id: number): Promise<T | null>;
+}
+
+class UserRepository implements Repository<User> {
+    async findAll(): Promise<User[]> {
+        return [];
+    }
+    
+    async findById(id: number): Promise<User | null> {
+        return null;
+    }
+}
+```
+
+### Decorators
+
+```typescript
+// Class decorators
+function singleton(target: Function) {
+    let instance: any;
+    return function(...args: any[]) {
+        if (!instance) {
+            instance = new target(...args);
+        }
+        return instance;
+    };
+}
+
+@singleton
+class DatabaseConnection {
+    // Implementation
+}
+
+// Method decorators
+function logMethod(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    const originalMethod = descriptor.value;
+    descriptor.value = function(...args: any[]) {
+        console.log(`Calling ${propertyKey} with`, args);
+        return originalMethod.apply(this, args);
+    };
+}
+```
+
+### Advanced Types
+
+```typescript
+// Conditional types
+type IsString<T> = T extends string ? true : false;
+
+// Mapped types
+type ReadonlyUser = { readonly [K in keyof User]: User[K] };
+
+// Template literal types
+type EventName = `on${Capitalize<string>}Change`;
+
+// Utility types
+type PartialUser = Partial<User>;
+type RequiredEmail = Required<User>;
+type UserKeys = keyof User;
+```
+
+---
+
+## 4. Node.js Event Loop Deep Dive
+
+### Event Loop Phases
+
+```javascript
+// Understanding the event loop
+setImmediate(() => console.log('immediate 1'));
+process.nextTick(() => console.log('next tick 1'));
+setTimeout(() => console.log('timeout 1'), 0);
+
+// Output order:
+// next tick 1
+// timeout 1
+// immediate 1
+```
+
+### Event Emitter
+
+```javascript
+const EventEmitter = require('events');
+
+class OrderService extends EventEmitter {
+    async processOrder(orderId) {
+        // Process order
+        this.emit('order.processed', { orderId, status: 'completed' });
+    }
+}
+
+const service = new OrderService();
+service.on('order.processed', (data) => {
+    console.log('Order processed:', data);
+});
+```
+
+### Streams
+
+```javascript
+const fs = require('fs');
+const { pipeline } = require('stream');
+
+// Readable stream
+const readStream = fs.createReadStream('input.txt');
+
+// Writable stream
+const writeStream = fs.createWriteStream('output.txt');
+
+// Pipeline for efficient processing
+pipeline(
+    readStream,
+    transformStream,
+    writeStream,
+    (err) => {
+        if (err) console.error('Pipeline error:', err);
+    }
+);
+```
+
+---
+
+## 5. Building APIs with Express and Fastify
+
+### Express.js
+
+```typescript
+
+const app = express();
+
+// Middleware
+app.use(helmet());
+app.use(cors());
+app.use(express.json());
+
+// Routes
+app.get('/api/users', async (req: Request, res: Response) => {
+    try {
+        const users = await UserService.findAll();
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Error handling middleware
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+    console.error(err.stack);
+    res.status(500).json({ error: 'Something went wrong!' });
+});
+```
+
+### Fastify
+
+```typescript
+
+const fastify = Fastify({ logger: true });
+
+// Register routes
+fastify.get('/api/users/:id', async (request, reply) => {
+    const { id } = request.params;
+    const user = await UserService.findById(Number(id));
+    
+    if (!user) {
+        return reply.code(404).send({ error: 'User not found' });
+    }
+    
+    return user;
+});
+
+// Plugin system
+fastify.register(async (fastify) => {
+    fastify.get('/health', async () => ({ status: 'ok' }));
+});
+```
+
+---
+
+## 6. Worker Threads and Clustering
+
+### Worker Threads
+
+```typescript
+const { Worker, isMainThread, parentPort, workerData } = require('worker_threads');
+
+if (isMainThread) {
+    // Main thread
+    const worker = new Worker(__filename, {
+        workerData: { numbers: [1, 2, 3, 4, 5] }
+    });
+    
+    worker.on('message', (result) => {
+        console.log('Result:', result);
+    });
+} else {
+    // Worker thread
+    const { numbers } = workerData;
+    const result = numbers.reduce((sum, num) => sum + num, 0);
+    parentPort.postMessage(result);
+}
+```
+
+### Clustering
+
+```typescript
+const cluster = require('cluster');
+const numCPUs = require('os').cpus().length;
+
+if (cluster.isMaster) {
+    for (let i = 0; i < numCPUs; i++) {
+        cluster.fork();
+    }
+    
+    cluster.on('exit', (worker) => {
+        console.log(`Worker ${worker.process.pid} died`);
+        cluster.fork(); // Restart worker
+    });
+} else {
+    // Start server
+    app.listen(3000);
+}
+```
+
+---
+
+## 7. NestJS Framework
+
+### Basic NestJS Application
+
+```typescript
+// main.ts
+
+async function bootstrap() {
+    const app = await NestFactory.create(AppModule);
+    await app.listen(3000);
+}
+bootstrap();
+
+// app.module.ts
+
+@Module({
+    controllers: [UsersController],
+    providers: [UsersService],
+})
+export class AppModule {}
+
+// users.controller.ts
+
+@Controller('users')
+export class UsersController {
+    constructor(private readonly usersService: UsersService) {}
+    
+    @Get()
+    findAll() {
+        return this.usersService.findAll();
+    }
+    
+    @Post()
+    create(@Body() createUserDto: CreateUserDto) {
+        return this.usersService.create(createUserDto);
+    }
+}
+```
+
+---
+
+## 8. Resource Directory: TypeScript & Node.js
+
+### Best Books
+
+| Book | Author | Price | Key Topics |
+|------|--------|-------|------------|
+| **Effective TypeScript** | Dan Vanderkam | Paid | 62 specific ways to use TypeScript |
+| **Learning Node.js** | O'Reilly | Paid | Node.js fundamentals |
+| **Node.js Design Patterns** | Mario Casciaro | Paid | Advanced patterns |
+| **Practical Modern JavaScript** | Nicolas Bevacqua | Paid | ES6+ patterns |
+
+### Best Udemy Courses
+
+| Course | Instructor | Price (INR) | Key Topics |
+|--------|------------|-------------|------------|
+| **TypeScript & NodeJS** | Andrei Neagoie | ₹399-799 | TypeScript, Node.js |
+| **The Complete Node.js Course** | Rob Percival | ₹399-799 | Express, MongoDB |
+| **TypeScript Masterclass** | Maximilian Schwarzmüller | ₹399-799 | Advanced TypeScript |
+| **NestJS - The Complete Guide** | Angela Yu | ₹399-799 | NestJS, microservices |
+
+### Best O'Reilly Resources
+
+| Resource | Topic | Access |
+|----------|-------|--------|
+| **Learning TypeScript** | O'Reilly | Paid |
+| **Node.js in Action** | Mike Cantelon | Paid |
+| **Building APIs with Node.js** | O'Reilly | Paid |
+
+### Best LinkedIn Learning Courses
+
+| Course | Instructor | Access |
+|--------|------------|--------|
+| **TypeScript Essential Training** | Erin Allard | Paid |
+| **Node.js Essential Training** | Emetrano Soto | Paid |
+| **Building RESTful APIs** | Barron Stone | Paid |
+
+### Free Resources
+
+| Platform | Resource | Link |
+|----------|----------|------|
+| **TypeScript Docs** | Official documentation | docs.microsoft.com/typescript |
+| **Node.js Docs** | Official documentation | nodejs.org/docs |
+| **Express.js Guide** | Official guide | expressjs.com |
+| **NestJS Docs** | Official documentation | docs.nestjs.com |
+
+---
+
+## 9. Common Node.js Interview Questions
+
+| Question | Answer |
+|----------|--------|
+| **Event Loop phases?** | Timers, Pending callbacks, Idle, Prepare, Poll, Check, Close callbacks |
+| **Difference between process.nextTick() and setImmediate()?** | nextTick runs before event loop continues, setImmediate runs in Check phase |
+| **How to handle async errors?** | Use try/catch in async functions or error handling middleware |
+| **What are streams?** | Objects for working with streaming data (Readable, Writable, Duplex, Transform) |
+| **Difference between require and import?** | require is CommonJS, import is ES6 modules |
+
+---
+
+## 10. Part Navigation
+
+### Previous Parts
+[Part 5: Async Python & FastAPI](/blog/it-career-guide/part-05-async-python-fastapi)
+
+### Next Parts
+[Part 7: PostgreSQL Mastery](/blog/it-career-guide/part-07-postgresql) ·
+[Part 8: MongoDB Deep Dive](/blog/it-career-guide/part-08-nosql-redis)
+
+---
+
+*[Proceed to Part 7: PostgreSQL Mastery →](/blog/it-career-guide/part-07-postgresql)*

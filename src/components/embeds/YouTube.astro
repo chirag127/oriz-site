@@ -1,0 +1,22 @@
+---
+/**
+ * YouTube embed shim for migrated blog posts. The original repo had its own
+ * component; one post imports it by this path, so the path is kept rather than
+ * rewriting that post's source.
+ */
+interface Props { id: string; title?: string }
+const { id, title = 'YouTube video' } = Astro.props
+---
+<figure class="yt">
+  <iframe
+    src={`https://www.youtube-nocookie.com/embed/${id}`}
+    title={title}
+    loading="lazy"
+    allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowfullscreen></iframe>
+</figure>
+
+<style>
+  .yt { margin: 1.5rem 0; }
+  .yt iframe { width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: 8px; }
+</style>

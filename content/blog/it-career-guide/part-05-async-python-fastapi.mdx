@@ -1,0 +1,384 @@
+---
+title: "Part 5: Async Python & High-Performance APIs with FastAPI"
+description: "Master asyncio event loops, coroutines, semaphores, FastAPI dependency injection, Pydantic v2, middleware, and background tasks. The single most valuable backend skill in 2026."
+pubDate: "2026-05-29"
+tags: ["Python", "FastAPI", "Backend", "Async", "Career Guide"]
+category: "Career Guide"
+author: "Chirag Singhal"
+series: "The 2026 IT Career Blueprint"
+part: 5
+draft: false
+---
+
+
+# Part 5: Async Python & High-Performance APIs with FastAPI
+
+*[← Back to Master Index](/blog/it-career-guide)*
+
+---
+
+## 1. Why Async Python in 2026?
+
+Asynchronous programming is no longer optional - it's essential for building high-performance APIs that handle thousands of concurrent requests. With the rise of microservices and real-time applications, understanding async patterns is critical for backend engineering roles.
+
+### Salary Impact
+Backend engineers with async expertise command **15-25% higher salaries** than those without, especially in roles involving:
+- Real-time APIs
+- WebSocket servers
+- Data streaming pipelines
+- Microservices with high throughput requirements
+
+---
+
+## 2. Python Asyncio Fundamentals
+
+### The Event Loop
+
+The event loop is the core of async Python. It manages and executes asynchronous tasks.
+
+```python
+import asyncio
+
+async def main():
+    print("Hello")
+    await asyncio.sleep(1)
+    print("World")
+
+# Run the async function
+asyncio.run(main())
+```
+
+### Coroutines
+
+Coroutines are async functions that can pause and resume execution.
+
+```python
+async def fetch_data(url: str) -> dict:
+    # Simulate network request
+    await asyncio.sleep(2)
+    return {"url": url, "data": "fetched"}
+
+async def process_multiple():
+    urls = ["url1", "url2", "url3"]
+    tasks = [fetch_data(url) for url in urls]
+    results = await asyncio.gather(*tasks)
+    return results
+```
+
+### async vs await
+
+```python
+# Regular function (blocking)
+def get_data():
+    time.sleep(2)  # Blocks entire thread
+    return data
+
+# Async function (non-blocking)
+async def get_data_async():
+    await asyncio.sleep(2)  # Doesn't block
+    return data
+```
+
+---
+
+## 3. Concurrency Primitives
+
+### Tasks
+
+Tasks wrap coroutines and run them concurrently.
+
+```python
+async def task_example():
+    task = asyncio.create_task(fetch_data("https://api.example.com"))
+    result = await task
+    return result
+
+# Multiple tasks
+tasks = [asyncio.create_task(fetch_data(url)) for url in urls]
+results = await asyncio.gather(*tasks)
+```
+
+### Semaphores (Rate Limiting)
+
+```python
+semaphore = asyncio.Semaphore(10)  # Max 10 concurrent operations
+
+async def limited_fetch(url: str):
+    async with semaphore:
+        return await fetch_data(url)
+```
+
+### Locks (Mutual Exclusion)
+
+```python
+lock = asyncio.Lock()
+
+async def safe_increment(counter):
+    async with lock:
+        counter.value += 1
+```
+
+---
+
+## 4. FastAPI Deep Dive
+
+### Basic FastAPI Application
+
+```python
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import asyncio
+
+app = FastAPI(title="My API", version="1.0.0")
+
+class Item(BaseModel):
+    name: str
+    price: float
+    description: str | None = None
+
+@app.get("/")
+async def root():
+    return {"message": "Hello World"}
+
+@app.post("/items/")
+async def create_item(item: Item):
+    return item
+```
+
+### Path Parameters and Query Parameters
+
+```python
+from fastapi import Path, Query
+
+@app.get("/items/{item_id}")
+async def read_item(
+    item_id: int = Path(..., ge=1),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, le=100)
+):
+    return {"item_id": item_id, "skip": skip, "limit": limit}
+```
+
+### Dependency Injection
+
+```python
+from fastapi import Depends
+
+def get_db():
+    db = DatabaseConnection()
+    try:
+        yield db
+    finally:
+        db.close()
+
+@app.get("/users/")
+async def get_users(db: Database = Depends(get_db)):
+    return await db.fetch_users()
+```
+
+### Middleware
+
+```python
+from fastapi import Request
+import time
+
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    response.headers["X-Process-Time"] = str(process_time)
+    return response
+```
+
+---
+
+## 5. Advanced FastAPI Features
+
+### Background Tasks
+
+```python
+from fastapi import BackgroundTasks
+
+def send_email(email: str):
+    # Simulate email sending
+    time.sleep(5)
+    print(f"Email sent to {email}")
+
+@app.post("/send-email/")
+async def send_email_endpoint(
+    email: str,
+    background_tasks: BackgroundTasks
+):
+    background_tasks.add_task(send_email, email)
+    return {"message": "Email sending started"}
+```
+
+### WebSockets
+
+```python
+from fastapi import WebSocket
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        data = await websocket.receive_text()
+        await websocket.send_text(f"Echo: {data}")
+```
+
+### Caching with Redis
+
+```python
+from fastapi import Depends
+import aioredis
+
+redis = aioredis.from_url("redis://localhost")
+
+@app.get("/cached-data/")
+async def get_cached_data(redis_client = Depends(lambda: redis)):
+    cached = await redis_client.get("data")
+    if cached:
+        return json.loads(cached)
+    
+    data = await fetch_expensive_data()
+    await redis_client.setex("data", 300, json.dumps(data))
+    return data
+```
+
+---
+
+## 6. Performance Optimization
+
+### Connection Pooling
+
+```python
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker
+
+engine = create_async_engine("postgresql+asyncpg://user:pass@localhost/db")
+AsyncSessionLocal = sessionmaker(engine, class_=AsyncSession)
+
+async def get_db():
+    async with AsyncSessionLocal() as session:
+        yield session
+```
+
+### Response Caching
+
+```python
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
+import aioredis
+
+@app.on_event("startup")
+async def startup():
+    redis = aioredis.from_url("redis://localhost")
+    await FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
+
+@app.get("/expensive-endpoint/")
+@FastAPICache.decorate("expensive")
+async def expensive_endpoint():
+    return await compute_expensive_result()
+```
+
+---
+
+## 7. Testing Async FastAPI
+
+### Async Test Client
+
+```python
+from httpx import AsyncClient
+import pytest
+
+@pytest.mark.asyncio
+async def test_read_item():
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        response = await ac.get("/items/1")
+        assert response.status_code == 200
+```
+
+### Mocking Async Functions
+
+```python
+from unittest.mock import AsyncMock, patch
+
+@patch('app.fetch_data', new_callable=AsyncMock)
+async def test_with_mock(mock_fetch):
+    mock_fetch.return_value = {"data": "mocked"}
+    # Test logic here
+```
+
+---
+
+## 8. Resource Directory: Async Python & FastAPI
+
+### Best Books
+
+| Book | Author | Price | Key Topics |
+|------|--------|-------|------------|
+| **Effective Python** | Brett Slatkin | Paid | Async patterns, best practices |
+| **Architecture Patterns with Python** | Harry Percival | Paid | Event-driven architecture |
+| **High Performance Python** | Micha Gorelick | Paid | Async, multiprocessing |
+
+### Best Udemy Courses
+
+| Course | Instructor | Price (INR) | Key Topics |
+|--------|------------|-------------|------------|
+| **FastAPI - Python Full Course** | Tech With Tim | ₹399-799 | FastAPI, async, databases |
+| **Python and Django Ultimate** | Jose Portilla | ₹399-799 | Web development |
+| **Asynchronous Python** | Flavio Amieiro | ₹399-799 | asyncio, async/await |
+| **REST API with FastAPI** | Jose Portilla | ₹399-799 | FastAPI, testing, deployment |
+
+### Best O'Reilly Resources
+
+| Resource | Topic | Access |
+|----------|-------|--------|
+| **Learning FastAPI** | Packt | Paid |
+| **Python Microservices** | O'Reilly | Paid |
+| **Building Microservices with Python** | Charles Scalfani | Paid |
+
+### Best LinkedIn Learning Courses
+
+| Course | Instructor | Access |
+|--------|------------|--------|
+| **FastAPI for Developers** | Erin Allard | Paid |
+| **Python Async Programming** | Barron Stone | Paid |
+| **API Design** | Keith Cunningham | Paid |
+
+### Free Resources
+
+| Platform | Resource | Link |
+|----------|----------|------|
+| **FastAPI Docs** | Official documentation | fastapi.tiangolo.com |
+| **Awesome FastAPI** | GitHub collection | github.com/tiangolo/awesome-fastapi |
+| **Asyncio Docs** | Python official | docs.python.org/3/library/asyncio.html |
+| **Real Python Async** | Tutorials | realpython.com/async-io-python |
+
+---
+
+## 9. Common Async Interview Questions
+
+| Question | Answer |
+|----------|--------|
+| **Difference between threading and asyncio?** | Threading runs multiple threads, asyncio runs multiple coroutines in single thread. Asyncio is more memory efficient. |
+| **What is an event loop?** | The core of async Python that manages and executes async tasks. |
+| **How to handle exceptions in asyncio?** | Use try/except in async functions or asyncio.gather(return_exceptions=True). |
+| **What is the difference between async and await?** | async defines a coroutine, await pauses execution until the coroutine completes. |
+| **When to use run_in_executor?** | For blocking I/O or CPU-bound operations that can't be made async. |
+
+---
+
+## 10. Part Navigation
+
+### Previous Parts
+[Part 4: Python Mastery](/blog/it-career-guide/part-04-python-mastery)
+
+### Next Parts
+[Part 6: TypeScript & Node.js](/blog/it-career-guide/part-06-typescript-nodejs) ·
+[Part 7: PostgreSQL Mastery](/blog/it-career-guide/part-07-postgresql)
+
+---
+
+*[Proceed to Part 6: TypeScript & Node.js →](/blog/it-career-guide/part-06-typescript-nodejs)*
