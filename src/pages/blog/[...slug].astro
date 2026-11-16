@@ -6,26 +6,74 @@
  */
 import type { CollectionEntry } from 'astro:content'
 import { getCollection, render } from 'astro:content'
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
 import BaseLayout from '../../layouts/BaseLayout.astro'
 
 export async function getStaticPaths() {
-  const posts = await getCollection('blog')
-  return posts.filter((p) => !p.data.draft).map((post) => ({ params: { slug: post.id }, props: { post } }))
+  const posts = (await getCollection('blog')).filter((p) => !p.data.draft)
+  const ids = new Set(posts.map((p) => p.id))
+
+  const paths: any[] = posts.map((post) => ({ params: { slug: post.id }, props: { post } }))
+
+  // 1. The archive links to both /blog/x/ and /blog/x/index/. The /index/ form is
+  //    a redirect stub rather than a second copy, so the postbuild checker does
+  //    not flag 100+ duplicate titles.
+  for (const post of posts) {
+    if (!ids.has(`${post.id}/index`)) {
+      paths.push({ params: { slug: `${post.id}/index` }, props: { redirect: `/blog/${post.id}/` } })
+    }
+  }
+
+  // 2. A year of writing left links to parts that were planned and never
+  //    written (it-career-guide part-27 onward, etc.). Rather than editing
+  //    hundreds of posts, any /blog/... target with no entry and no file gets a
+  //    redirect stub: to its series index when that exists, else to /blog/.
+  const linked = new Set<string>()
+  for (const post of posts) {
+    for (const m of (post.body ?? '').matchAll(/\]\(\/blog\/([^)\s#?]+)/g)) linked.add(m[1].replace(/\/$/, ''))
+    for (const m of (post.body ?? '').matchAll(/href="\/blog\/([^"#?]+)/g)) linked.add(m[1].replace(/\/$/, ''))
+  }
+  for (const target of linked) {
+    if (ids.has(target) || ids.has(`${target}/index`)) continue
+    if (existsSync(join(process.cwd(), 'public/blog', target))) continue
+    const series = target.includes('/') ? target.slice(0, target.lastIndexOf('/')) : ''
+    const to = series && (ids.has(series) || ids.has(`${series}/index`)) ? `/blog/${series}/` : '/blog/'
+    paths.push({ params: { slug: target }, props: { redirect: to } })
+  }
+
+  return paths
 }
 
 interface Props {
-  post: CollectionEntry<'blog'>
+  post?: CollectionEntry<'blog'>
+  redirect?: string
 }
 
-const { post } = Astro.props
-const { Content, headings } = await render(post)
+const { post, redirect } = Astro.props
+const rendered = post ? await render(post) : null
+const Content = rendered?.Content
+const headings = rendered?.headings ?? []
 const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 const toc = headings.filter((h) => h.depth === 2 || h.depth === 3)
+const title = post?.data.title ?? 'Redirecting'
+const description = post?.data.description ?? 'This part has moved.'
 ---
 
+{redirect ? (
+  <BaseLayout title={`Redirecting — ${redirect}`} description="This page has moved." noindex>
+    <div class="container post">
+      <meta http-equiv="refresh" content={`0;url=${redirect}`} />
+      <p class="moved">
+        This part has not been written yet or has moved.
+        <a href={redirect}>Continue to {redirect}</a>.
+      </p>
+    </div>
+  </BaseLayout>
+) : (
 <BaseLayout
-  title={post.data.title}
-  description={post.data.description ?? post.data.title}
+  title={title}
+  description={description}
   type="article"
   publishedTime={post.data.pubDate}
   keywords={post.data.tags}
@@ -67,6 +115,7 @@ const toc = headings.filter((h) => h.depth === 2 || h.depth === 3)
     </footer>
   </article>
 </BaseLayout>
+)}
 
 <style>
   .post { max-width: 46rem; }
@@ -87,5 +136,6 @@ const toc = headings.filter((h) => h.depth === 2 || h.depth === 3)
   .prose :global(th), .prose :global(td) { border: 1px solid var(--color-border, rgba(255,255,255,0.1)); padding: 0.4rem 0.55rem; text-align: left; }
   .prose :global(blockquote) { border-left: 3px solid currentColor; padding-left: 1rem; opacity: 0.9; }
 
+  .moved { margin-top: 3rem; font-size: 0.9rem; }
   .foot { margin: 2.5rem 0 3rem; padding-top: 1rem; border-top: 1px solid var(--color-border, rgba(255,255,255,0.1)); font-size: 0.85rem; }
 </style>
