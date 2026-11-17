@@ -1,25 +1,39 @@
 ---
 import { getAnalytics } from '../lib/services';
 const { ga4, clarity } = getAnalytics();
+
+// Host allowlist: the site is served from oriz.in and, on GitHub Pages, from
+// gh.oriz.in/<repo>/. Firing on both splits one audience across two hostnames,
+// so only the listed hosts report. PUBLIC_GA_HOSTS overrides the default.
+const hosts = (import.meta.env.PUBLIC_GA_HOSTS ?? 'oriz.in,www.oriz.in')
+  .split(',')
+  .map((h: string) => h.trim())
+  .filter(Boolean);
 ---
 
 {
-  ga4.enabled && (
-    <>
-      <script
-        is:inline
-        async
-        src={`https://www.googletagmanager.com/gtag/js?id=${ga4.id}`}
-      />
-      <script is:inline define:vars={{ measurementId: ga4.id }}>
+  ga4.enabled && hosts.length > 0 && (
+    <script is:inline define:vars={{ measurementId: ga4.id, allowedHosts: hosts }}>
+      (function () {
+        if (allowedHosts.indexOf(location.hostname) === -1) return;
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=' + measurementId;
+        document.head.appendChild(s);
         window.dataLayer = window.dataLayer || [];
-        function gtag() {
+        window.gtag = function () {
           window.dataLayer.push(arguments);
-        }
+        };
         gtag('js', new Date());
-        gtag('config', measurementId, { send_page_view: true });
-      </script>
-    </>
+        gtag('consent', 'default', {
+          ad_storage: 'denied',
+          ad_user_data: 'denied',
+          ad_personalization: 'denied',
+          analytics_storage: 'denied',
+        });
+        gtag('config', measurementId, { anonymize_ip: true, send_page_view: true });
+      })();
+    </script>
   )
 }
 
